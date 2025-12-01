@@ -2,11 +2,11 @@ import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database.js";
 
 class Faculty extends Model {
-  fid!: number;
-  fname!: string;
+  declare fid: number;
+  declare fname: string;
 
-  readonly createdAt!: Date;
-  readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Faculty.init(

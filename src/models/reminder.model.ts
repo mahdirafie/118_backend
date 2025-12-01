@@ -4,9 +4,9 @@ import Contactable from "./contactable.model.js";
 import Employee from "./employee.model.js";
 
 class Reminder extends Model {
-  cid!: ForeignKey<Contactable["cid"]>;
-  emp_id!: ForeignKey<Employee["emp_id"]>;
-  time!: Date;
+  declare cid: ForeignKey<Contactable["cid"]>;
+  declare emp_id: ForeignKey<Employee["emp_id"]>;
+  declare time: Date;
 }
 
 Reminder.init(

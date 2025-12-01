@@ -8,12 +8,12 @@ export enum PersonalAttributeType {
 }
 
 class PersonalAttribute extends Model {
-  att_id!: number;
-  type!: PersonalAttributeType;
-  att_name!: string;
+  declare att_id: number;
+  declare type: PersonalAttributeType;
+  declare att_name: string;
 
-  readonly createdAt!: Date;
-  readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 PersonalAttribute.init(

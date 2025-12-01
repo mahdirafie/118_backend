@@ -3,9 +3,9 @@ import sequelize from "../config/database.js";
 import Contactable from "./contactable.model.js";
 
 class Space extends Model {
-    cid!: ForeignKey<Contactable['cid']>;
-    sname!: string;
-    room!: string;
+    declare cid: ForeignKey<Contactable['cid']>;
+    declare sname: string;
+    declare room: string;
 }
 
 Space.init({

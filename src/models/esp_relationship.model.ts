@@ -5,10 +5,10 @@ import Space from "./space.model.js";
 import Post from "./post.model.js";
 
 class ESPRelationship extends Model {
-  esp_id!: number;
-  emp_id!: ForeignKey<Employee["emp_id"]>;
-  sid!: ForeignKey<Space["cid"]>;
-  pid!: ForeignKey<Post["cid"]>;
+  declare esp_id: number;
+  declare emp_id: ForeignKey<Employee["emp_id"]>;
+  declare sid: ForeignKey<Space["cid"]>;
+  declare pid: ForeignKey<Post["cid"]>;
 }
 
 ESPRelationship.init(

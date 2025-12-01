@@ -4,8 +4,8 @@ import Contactable from "./contactable.model.js";
 import FavoriteCategory from "./favorite_category.model.js";
 
 class Favorite extends Model {
-    cid!: ForeignKey<Contactable['cid']>;
-    favcat_id!: ForeignKey<FavoriteCategory['favcat_id']>;
+    declare cid: ForeignKey<Contactable['cid']>;
+    declare favcat_id: ForeignKey<FavoriteCategory['favcat_id']>;
 }
 
 Favorite.init({

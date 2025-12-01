@@ -2,13 +2,13 @@ import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
 class User extends Model {
-  uid!: number;
-  phone!: string;
-  fullname!: string;
-  password!: string;
+  declare uid: number;
+  declare phone: string;
+  declare full_name: string;
+  declare password: string;
 
-  readonly createdAt!: Date;
-  readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 User.init(

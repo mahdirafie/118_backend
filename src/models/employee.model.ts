@@ -4,13 +4,13 @@ import Contactable from "./contactable.model.js";
 import User from "./user.model.js";
 
 class Employee extends Model {
-  emp_id!: number;
-  cid!: ForeignKey<Contactable["cid"]>;
-  uid!: ForeignKey<User["uid"]>;
-  personnel_no!: string;
-  national_code!: string;
+  declare emp_id: number;
+  declare cid: ForeignKey<Contactable["cid"]>;
+  declare uid: ForeignKey<User["uid"]>;
+  declare personnel_no: string;
+  declare national_code: string;
 
-  readonly createdAt!: Date;
+  declare readonly createdAt: Date;
 }
 
 Employee.init(

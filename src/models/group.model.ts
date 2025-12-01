@@ -2,10 +2,10 @@ import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
 class Group extends Model {
-  gid!: number;
-  gname!: string;
+  declare gid: number;
+  declare gname: string;
 
-  readonly createdAt!: Date;
+  declare readonly createdAt: Date;
 }
 
 Group.init(

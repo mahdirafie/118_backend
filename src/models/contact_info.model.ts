@@ -3,12 +3,12 @@ import sequelize from "../config/database.js";
 import Contactable from "./contactable.model.js";
 
 class ContactInfo extends Model {
-  contact_number!: string;
-  range!: string | null;
-  subrange!: string | null;
-  forward!: string | null;
-  extension!: string | null;
-  cid!: ForeignKey<Contactable["cid"]>;
+  declare contact_number: string;
+  declare range: string | null;
+  declare subrange: string | null;
+  declare forward: string | null;
+  declare extension: string | null;
+  declare cid: ForeignKey<Contactable["cid"]>;
 }
 
 ContactInfo.init(

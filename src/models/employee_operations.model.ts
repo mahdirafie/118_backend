@@ -3,8 +3,8 @@ import sequelize from "../config/database.js";
 import Employee from "./employee.model.js";
 
 class EmployeeOperation extends Model {
-  emp_id!: ForeignKey<Employee["emp_id"]>;
-  operation!: string;
+  declare emp_id: ForeignKey<Employee["emp_id"]>;
+  declare operation: string;
 }
 
 EmployeeOperation.init(

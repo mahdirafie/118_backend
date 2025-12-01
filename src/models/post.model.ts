@@ -3,9 +3,9 @@ import sequelize from "../config/database.js";
 import Contactable from "./contactable.model.js";
 
 class Post extends Model {
-  cid!: ForeignKey<Contactable["cid"]>;
-  pname!: string;
-  description!: string;
+  declare cid: ForeignKey<Contactable["cid"]>;
+  declare pname: string;
+  declare description: string;
 }
 
 Post.init(

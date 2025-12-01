@@ -2,7 +2,7 @@ import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
 class Contactable extends Model {
-  cid!: number;
+  declare cid: number;
 }
 
 Contactable.init(

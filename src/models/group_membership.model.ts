@@ -4,8 +4,8 @@ import Employee from "./employee.model.js";
 import Group from "./group.model.js";
 
 class GroupMembership extends Model {
-  emp_id!: ForeignKey<Employee["emp_id"]>;
-  gid!: ForeignKey<Group["gid"]>;
+  declare emp_id: ForeignKey<Employee["emp_id"]>;
+  declare gid: ForeignKey<Group["gid"]>;
 }
 
 GroupMembership.init(

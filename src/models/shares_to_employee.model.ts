@@ -4,11 +4,11 @@ import PersonalAttributeValue from "./personal_att_val.model.js";
 import Employee from "./employee.model.js";
 
 class SharesToEmployee extends Model {
-  val_id!: ForeignKey<PersonalAttributeValue["val_id"]>;
-  emp_id!: ForeignKey<Employee["emp_id"]>;
-  receiver_emp_id!: ForeignKey<Employee["emp_id"]>;
+  declare val_id: ForeignKey<PersonalAttributeValue["val_id"]>;
+  declare emp_id: ForeignKey<Employee["emp_id"]>;
+  declare receiver_emp_id: ForeignKey<Employee["emp_id"]>;
 
-  readonly createdAt!: Date;
+  declare readonly createdAt: Date;
 }
 
 SharesToEmployee.init(

@@ -4,12 +4,12 @@ import User from "./user.model.js";
 import { OTPStatus } from "../common/OTPStatus.js";
 
 export class OTP extends Model {
-  id!: number;
-  created_at!: Date;
-  status!: OTPStatus;
-  code!: string;
-  efforts_remained!: number;
-  phone!: string;
+  declare id: number;
+  declare created_at: Date;
+  declare status: OTPStatus;
+  declare code: string;
+  declare efforts_remained: number;
+  declare phone: string;
 }
 
 OTP.init(

@@ -4,11 +4,11 @@ import PersonalAttribute from "./personal_att.model.js";
 import Employee from "./employee.model.js";
 
 class PersonalAttributeValue extends Model {
-  val_id!: number;
-  value!: string;
-  is_sharable!: boolean;
-  att_id!: ForeignKey<PersonalAttribute["att_id"]>;
-  emp_id!: ForeignKey<Employee['emp_id']>;
+  declare val_id: number;
+  declare value: string;
+  declare is_sharable: boolean;
+  declare att_id: ForeignKey<PersonalAttribute["att_id"]>;
+  declare emp_id: ForeignKey<Employee['emp_id']>;
 }
 
 PersonalAttributeValue.init(

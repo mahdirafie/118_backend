@@ -3,11 +3,11 @@ import sequelize from "../config/database.js";
 import User from "./user.model.js";
 
 class FavoriteCategory extends Model {
-  favcat_id!: number;
-  title!: string;
-  uid!: ForeignKey<User["uid"]>;
+  declare favcat_id: number;
+  declare title: string;
+  declare uid: ForeignKey<User["uid"]>;
 
-  readonly createdAt!: Date;
+  declare readonly createdAt: Date;
 }
 
 FavoriteCategory.init(

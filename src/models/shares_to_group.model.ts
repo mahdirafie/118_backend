@@ -5,11 +5,11 @@ import Group from "./group.model.js";
 import PersonalAttributeValue from "./personal_att_val.model.js";
 
 class SharesToGroup extends Model {
-    val_id!: ForeignKey<PersonalAttributeValue['val_id']>;
-    emp_id!: ForeignKey<Employee['emp_id']>;
-    gid!: ForeignKey<Group['gid']>;
+    declare val_id: ForeignKey<PersonalAttributeValue['val_id']>;
+    declare emp_id: ForeignKey<Employee['emp_id']>;
+    declare gid: ForeignKey<Group['gid']>;
     
-    readonly createdAt!: Date; // sent at time
+    declare readonly createdAt: Date; // sent at time
 }
 
 SharesToGroup.init({

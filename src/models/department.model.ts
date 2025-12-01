@@ -3,12 +3,12 @@ import sequelize from "../config/database.js";
 import { Model, DataTypes, ForeignKey } from "sequelize";
 
 class Department extends Model {
-  did!: number;
-  dname!: string;
-  fid!: ForeignKey<Faculty["fid"]>;
+  declare did: number;
+  declare dname: string;
+  declare fid: ForeignKey<Faculty["fid"]>;
 
-  readonly createdAt!: Date;
-  readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Department.init(

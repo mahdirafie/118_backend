@@ -4,8 +4,8 @@ import Employee from "./employee.model.js";
 import Department from "./department.model.js";
 
 class EmployeeFacultyMemeber extends Model {
-  emp_id!: ForeignKey<Employee["emp_id"]>;
-  did!: ForeignKey<Department["did"]>;
+  declare emp_id: ForeignKey<Employee["emp_id"]>;
+  declare did: ForeignKey<Department["did"]>;
 }
 
 EmployeeFacultyMemeber.init(
