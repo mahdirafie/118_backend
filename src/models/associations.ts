@@ -34,8 +34,8 @@ export const applyAssociations = () => {
     FavoriteCategory.belongsTo(User, { foreignKey: 'uid' });
 
     // FavoriteCategory <-> Contactable
-    FavoriteCategory.belongsToMany(Contactable, { through: Favorite });
-    Contactable.belongsToMany(FavoriteCategory, { through: Favorite });
+    FavoriteCategory.belongsToMany(Contactable, { through: Favorite, foreignKey: 'favcat_id', otherKey: 'cid' });
+    Contactable.belongsToMany(FavoriteCategory, { through: Favorite, foreignKey: 'cid', otherKey: 'favcat_id' });
 
     // Contactable -> ContactInfo
     Contactable.hasMany(ContactInfo, { foreignKey: 'cid' });
@@ -44,6 +44,10 @@ export const applyAssociations = () => {
     // User -> Employee
     User.hasOne(Employee, { foreignKey: 'uid' });
     Employee.belongsTo(User, { foreignKey: 'uid' });
+
+    // Contactable -> Employee
+    Contactable.hasOne(Employee, {foreignKey: 'cid'});
+    Employee.belongsTo(Contactable, {foreignKey: 'cid'});
 
     // Employee -> EmployeeFacultyMember / EmployeeNonFacultyMember
     Employee.hasOne(EmployeeFacultyMember, { foreignKey: 'emp_id' });
@@ -65,12 +69,12 @@ export const applyAssociations = () => {
     PersonalAttributeValue.belongsTo(Employee, { foreignKey: 'emp_id' });
 
     // Employee <-> Contactable (Reminder)
-    Employee.belongsToMany(Contactable, { through: Reminder });
-    Contactable.belongsToMany(Employee, { through: Reminder });
+    Employee.belongsToMany(Contactable, { through: Reminder, foreignKey: 'emp_id', otherKey: 'cid' });
+    Contactable.belongsToMany(Employee, { through: Reminder, foreignKey: 'cid', otherKey: 'emp_id' });
 
     // Employee <-> Group (GroupMembership)
-    Employee.belongsToMany(Group, { through: GroupMembership });
-    Group.belongsToMany(Employee, { through: GroupMembership });
+    Employee.belongsToMany(Group, { through: GroupMembership, foreignKey: 'emp_id', otherKey: 'gid' });
+    Group.belongsToMany(Employee, { through: GroupMembership, foreignKey: 'gid', otherKey: 'emp_id' });
 
     // SharesToGroup ternary relationship
     SharesToGroup.belongsTo(Employee, { foreignKey: 'emp_id' });

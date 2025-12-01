@@ -29,7 +29,7 @@ GroupMembership.init(
       onDelete: "CASCADE",
     },
   },
-  { sequelize, tableName: "group_membership", timestamps: false }
+  { sequelize, tableName: "group_memberships", timestamps: false }
 );
 
 export default GroupMembership;
