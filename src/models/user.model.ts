@@ -6,6 +6,7 @@ class User extends Model {
   declare phone: string;
   declare full_name: string;
   declare password: string;
+  declare refresh_token: string | null;
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -31,6 +32,10 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    refresh_token : {
+      type: DataTypes.STRING,
+      allowNull: true,
+    }
   },
   { sequelize, tableName: 'users', timestamps: true }
 );
