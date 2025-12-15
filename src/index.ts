@@ -2,18 +2,32 @@ import express from "express";
 import sequelize from "./config/database.js";
 import { Request, Response } from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 
 // Controllers
 import { AuthController } from "./controllers/auth.controller.js";
+import { FavoriteController } from "./controllers/favorite.controller.js";
+import { ProfileController } from "./controllers/profile.controller.js";
+import { EmployeeController } from "./controllers/employee.controller.js";
+import { SearchController } from "./controllers/search.controller.js";
+import { FacultyController } from "./controllers/faculty.controller.js";
+import { PostController } from "./controllers/post.controller.js";
+import { SpaceController } from "./controllers/space.controller.js";
 
 // Import associations function
 import { applyAssociations } from "./models/associations.js";
-import { FavoriteController } from "./controllers/favorite.controller.js";
+
+import { OTP } from "./models/otp.model.js";
+import ESPRelationship from "./models/esp_relationship.model.js";
+import { ESPRelationshipController } from "./controllers/esp.controller.js";
 
 const app = express();
 const PORT = 4000;
 
 app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+
+app.use(cors());
 
 dotenv.config();
 
@@ -28,9 +42,44 @@ app.post("/auth/signup", AuthController.signupUser);
 app.post("/auth/login", AuthController.loginUser);
 app.post("/auth/refresh", AuthController.refreshToken);
 app.post("/auth/createemp", AuthController.createEmployee);
+app.post("/auth/send-otp", AuthController.sendOTP);
+app.post("/auth/verify-otp", AuthController.verifyOTP);
+app.post("/auth/register-employeef", AuthController.registerFacultyEmployee);
+app.post("/auth/register-employeen", AuthController.registerNonFacultyEmployee);
 
-// favorite stuff related reoutes
+// favorite related routes
 app.post('/favorite/add-favorite-category', FavoriteController.addFavoriteCategory);
+app.post('/favorite/user/get-fav-cats', FavoriteController.getUserFavoriteCategories);
+app.post('/favorite/add-fav-cat', FavoriteController.addFavoriteCategory);
+app.delete('/favorite/delete-cat', FavoriteController.deleteFavoriteCategory);
+app.put('/favorite/update-cat', FavoriteController.updateFavoriteCategory);
+
+// faculty related routes
+app.post('/faculty/create', FacultyController.createFaculty);
+app.post('/faculty/create-department', FacultyController.createDepartment);
+app.get('/faculty/get-all', FacultyController.getAllFaculties);
+app.get('/faculty/get-faculty-departments/:fid', FacultyController.getDepartmentsForFaculty);
+
+// profile related routes
+app.get('/profile/:user_id', ProfileController.getUserProfile);
+
+// employee related routes
+app.get('/employee/workareas', EmployeeController.getDistinctWorkAreas);
+
+// search related routes
+app.get('/search', SearchController.search);
+app.post('/search/history/create', SearchController.createSearchHistory);
+app.get('/search/user-histories/:uid', SearchController.getSearchHistory);
+app.delete('/search/history/delete/:shid', SearchController.deleteSearchHistory);
+
+// post related routes
+app.post('/post/create', PostController.createPost);
+
+// space related routes
+app.post('/space/create', SpaceController.createSpace);
+
+// esp relationship related routes
+app.post('/esp/create', ESPRelationshipController.createESPRelationship);
 
 // -------------------------
 // Connect to DB and sync models

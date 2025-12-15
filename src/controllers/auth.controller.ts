@@ -7,25 +7,31 @@ import {
   createRefreshToken,
   verifyRefreshToken,
 } from "../common/token.service.js";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import sequelize from "../config/database.js";
 import Contactable from "../models/contactable.model.js";
 import FavoriteCategory from "../models/favorite_category.model.js";
+import { sendSMS } from "../config/sms.js";
+import { OTP } from "../models/otp.model.js";
+import { OTPStatus } from "../common/OTPStatus.js";
+import EmployeeFacultyMemeber from "../models/employee_fm.model.js";
+import EmployeeNonFacultyMember from "../models/employee_nfm.model.js";
+import Department from "../models/department.model.js";
 
 export class AuthController {
   // user signup
   static async signupUser(req: Request, res: Response) {
-    const t = await sequelize.transaction();
     try {
       const { phone, full_name, password } = req.body;
+
       if (!phone || !full_name || !password) {
         return res
           .status(400)
           .json({ message: "لطفا همه داده های مورد نیاز را وارد نمایید!" });
       }
 
-      let user = await User.findOne({ where: { phone } });
-      if (user) {
+      const existingUser = await User.findOne({ where: { phone } });
+      if (existingUser) {
         return res
           .status(400)
           .json({ message: "کاربر وجود دارد. لطفا وارد شوید!" });
@@ -33,33 +39,39 @@ export class AuthController {
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      user = await User.create(
-        {
-          phone,
-          full_name,
-          password: hashedPassword,
-        },
-        { transaction: t }
-      );
+      const t = await sequelize.transaction();
 
-      await FavoriteCategory.create(
-        { uid: user.uid, title: "همه" },
-        { transaction: t }
-      );
+      try {
+        const user = await User.create(
+          {
+            phone,
+            full_name,
+            password: hashedPassword,
+          },
+          { transaction: t }
+        );
 
-      await t.commit();
+        await FavoriteCategory.create(
+          { uid: user.uid, title: "همه" },
+          { transaction: t }
+        );
 
-      return res.status(201).json({
-        message: "کاربر با موفقیت ثبت نام شد!",
-        user: {
-          full_name: user.full_name,
-          phone: user.phone,
-        },
-      });
+        await t.commit();
+
+        return res.status(201).json({
+          message: "کاربر با موفقیت ثبت نام شد!",
+          user: {
+            full_name: user.full_name,
+            phone: user.phone,
+          },
+        });
+      } catch (error) {
+        await t.rollback();
+        throw error;
+      }
     } catch (error) {
       console.error(error);
-      await t.rollback();
-      res.status(500).json({ message: "خطای داخلی سرور!" });
+      return res.status(500).json({ message: "خطای داخلی سرور!" });
     }
   }
 
@@ -122,17 +134,12 @@ export class AuthController {
       // Store refresh token in DB
       await user.update({ refresh_token: refreshToken });
 
-      const userInfo = user.get();
-      delete userInfo.password;
-      delete userInfo.refresh_token;
-
       return res.status(200).json({
         message: employee
           ? "ورود موفقیت آمیز (کاربر کارمند)"
           : "ورود موفقیت آمیز (کاربر عمومی)",
         user_type: employee ? "employee" : "general",
-        employee: employee ?? undefined,
-        user: !employee ? userInfo : undefined,
+        user_id: user.uid,
         tokens: {
           access_token: accessToken,
           refresh_token: refreshToken,
@@ -147,20 +154,50 @@ export class AuthController {
   // refresh the access token
   static async refreshToken(req: Request, res: Response) {
     const { refresh_token } = req.body;
-
+    console.log("refresh token called!");
     if (!refresh_token) {
       return res.status(400).json({ message: "ارسال رفرش توکن الزامی است!" });
     }
 
     try {
+      // Decode token (signature and validity)
       const payload: any = verifyRefreshToken(refresh_token);
 
-      // Create ONLY new access token
-      const newAccessToken = createAccessToken({ id: payload.id });
+      // Load user
+      const user = await User.findOne({ where: { uid: payload.uid } });
+      if (!user || !user.refresh_token) {
+        return res.status(401).json({ message: "Refresh token invalid" });
+      }
+
+      // Compare hashed refresh token
+      const isMatch = await bcrypt.compare(refresh_token, user.refresh_token);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Refresh token invalid or rotated" });
+      }
+
+      // Create new tokens
+      const newAccessToken = createAccessToken({
+        uid: payload.uid,
+        type: payload.type
+      });
+
+      const newRefreshToken = createRefreshToken({
+        uid: payload.uid,
+        type: payload.type
+      });
+
+      // Hash and store the new refresh token (rotation)
+      const hashedRefresh = await bcrypt.hash(newRefreshToken, 10);
+
+      await User.update(
+        { refresh_token: hashedRefresh },
+        { where: { uid: payload.uid } }
+      );
 
       return res.status(200).json({
-        message: "Access token نوسازی شد!",
+        message: "توکن ها نوسازی شدند!",
         access_token: newAccessToken,
+        refresh_token: newRefreshToken, // plain version for client
       });
     } catch (error) {
       return res.status(401).json({
@@ -171,7 +208,6 @@ export class AuthController {
 
   // TEST create an Emlpoyee
   static async createEmployee(req: Request, res: Response) {
-    const t = await sequelize.transaction();
     try {
       const { national_code, personnel_no, phone, full_name } = req.body;
 
@@ -181,39 +217,362 @@ export class AuthController {
         });
       }
 
-      const contactable = await Contactable.create({}, { transaction: t });
+      const check1 = await User.findOne({ where: { phone } });
+      if (check1) {
+        return res
+          .status(400)
+          .json({ message: `کاربر با این شماره وجود دارد! ${phone}` });
+      }
 
-      //hash the password for the user
-      const hashedPassword = await bcrypt.hash(national_code, 10);
-      const user = await User.create(
-        { phone, full_name, password: hashedPassword },
-        { transaction: t }
-      );
-
-      await FavoriteCategory.create(
-        { uid: user.uid, title: "همه" },
-        { transaction: t }
-      );
-
-      const employee = await Employee.create(
-        {
-          national_code,
-          cid: contactable.cid,
-          uid: user.uid,
-          personnel_no,
+      const check2 = await Employee.findOne({
+        where: {
+          [Op.or]: [
+            { national_code: national_code },
+            { personnel_no: personnel_no },
+          ],
         },
-        { transaction: t }
-      );
+      });
+      if (check2) {
+        return res
+          .status(400)
+          .json({ message: "کارمند قبلا در سیستم ثبت شده است!" });
+      }
 
-      await t.commit();
+      const t = await sequelize.transaction();
 
-      return res
-        .status(201)
-        .json({ message: "کارمند با موفقیت ثبت نام شد!", employee });
+      try {
+        const contactable = await Contactable.create({}, { transaction: t });
+
+        // hash the password for the user
+        const hashedPassword = await bcrypt.hash(national_code, 10);
+
+        const user = await User.create(
+          { phone, full_name, password: hashedPassword },
+          { transaction: t }
+        );
+
+        await FavoriteCategory.create(
+          { uid: user.uid, title: "همه" },
+          { transaction: t }
+        );
+
+        const employee = await Employee.create(
+          {
+            national_code,
+            cid: contactable.cid,
+            uid: user.uid,
+            personnel_no,
+          },
+          { transaction: t }
+        );
+
+        await t.commit();
+
+        return res
+          .status(201)
+          .json({ message: "کارمند با موفقیت ثبت نام شد!", employee });
+      } catch (error) {
+        await t.rollback();
+        throw error;
+      }
     } catch (error) {
       console.error(error);
-      await t.rollback();
       return res.status(500).json({ message: "خطای داخلی سرور" });
+    }
+  }
+
+  // register faculty member employee
+  static async registerFacultyEmployee(req: Request, res: Response) {
+    try {
+      const { national_code, personnel_no, phone, full_name, did } = req.body;
+
+      if (!national_code || !personnel_no || !phone || !full_name || !did) {
+        return res.status(400).json({
+          message: "اطلاعات وارد شده کافی نیست. لطفا همه موارد را پر کنید!",
+        });
+      }
+
+      const dep = await Department.findOne({ where: { did } });
+      if (!dep) {
+        return res
+          .status(400)
+          .json({ message: "چنین دپارتمانی وجود ندارد!" });
+      }
+
+      const check1 = await User.findOne({ where: { phone } });
+      if (check1) {
+        return res
+          .status(400)
+          .json({ message: `کاربر با این شماره وجود دارد! ${phone}` });
+      }
+
+      const check2 = await Employee.findOne({
+        where: {
+          [Op.or]: [
+            { national_code: national_code },
+            { personnel_no: personnel_no },
+          ],
+        },
+      });
+      if (check2) {
+        return res
+          .status(400)
+          .json({ message: "کارمند قبلا در سیستم ثبت شده است!" });
+      }
+
+      const t = await sequelize.transaction();
+
+      try {
+        const contactable = await Contactable.create({}, { transaction: t });
+
+        // hash the password for the user
+        const hashedPassword = await bcrypt.hash(national_code, 10);
+
+        const user = await User.create(
+          { phone, full_name, password: hashedPassword },
+          { transaction: t }
+        );
+
+        await FavoriteCategory.create(
+          { uid: user.uid, title: "همه" },
+          { transaction: t }
+        );
+
+        const employee = await Employee.create(
+          {
+            national_code,
+            cid: contactable.cid,
+            uid: user.uid,
+            personnel_no,
+          },
+          { transaction: t }
+        );
+
+        // create faculty member employee
+        await EmployeeFacultyMemeber.create(
+          { did: did, emp_id: employee.emp_id },
+          { transaction: t }
+        );
+
+        await t.commit();
+
+        return res
+          .status(201)
+          .json({ message: "کاربر با موفقیت ثبت نام شد!" });
+      } catch (error) {
+        await t.rollback();
+        throw error;
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "خطای داخلی سرور!" });
+    }
+  }
+
+  // register non-faculty member employee
+  static async registerNonFacultyEmployee(req: Request, res: Response) {
+    try {
+      const { national_code, personnel_no, phone, full_name, workarea } = req.body;
+
+      if (!national_code || !personnel_no || !phone || !full_name || !workarea) {
+        return res.status(400).json({
+          message: "اطلاعات وارد شده کافی نیست. لطفا همه موارد را پر کنید!",
+        });
+      }
+
+      const check1 = await User.findOne({ where: { phone } });
+      if (check1) {
+        return res
+          .status(400)
+          .json({ message: `کاربر با این شماره وجود دارد! ${phone}` });
+      }
+
+      const check2 = await Employee.findOne({
+        where: {
+          [Op.or]: [
+            { national_code: national_code },
+            { personnel_no: personnel_no },
+          ],
+        },
+      });
+      if (check2) {
+        return res
+          .status(400)
+          .json({ message: "کارمند قبلا در سیستم ثبت شده است!" });
+      }
+
+      const t = await sequelize.transaction();
+
+      try {
+        const contactable = await Contactable.create({}, { transaction: t });
+
+        // hash the password for the user
+        const hashedPassword = await bcrypt.hash(national_code, 10);
+
+        const user = await User.create(
+          { phone, full_name, password: hashedPassword },
+          { transaction: t }
+        );
+
+        await FavoriteCategory.create(
+          { uid: user.uid, title: "همه" },
+          { transaction: t }
+        );
+
+        const employee = await Employee.create(
+          {
+            national_code,
+            cid: contactable.cid,
+            uid: user.uid,
+            personnel_no,
+          },
+          { transaction: t }
+        );
+
+        // create non-faculty employee
+        await EmployeeNonFacultyMember.create(
+          { workarea: workarea, emp_id: employee.emp_id },
+          { transaction: t }
+        );
+
+        await t.commit();
+
+        return res
+          .status(201)
+          .json({ message: "کاربر با موفقیت ثبت نام شد!" });
+      } catch (error) {
+        await t.rollback();
+        throw error;
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "خطای داخلی سرور!" });
+    }
+  }
+
+  // send otp
+  static async sendOTP(req: Request, res: Response) {
+    try {
+      const { phone } = req.body;
+
+      if (!phone) {
+        return res
+          .status(400)
+          .json({ message: "شماره همراه ضروری است!" });
+      }
+
+      const user = await User.findOne({
+        where: {
+          phone
+        }
+      });
+
+      if (user) {
+        return res.status(400).json({ message: "شما در حال حاضر حساب کاربری دارید. لطفا وارد شوید!" });
+      }
+
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+
+      // delete all the expired codes.
+      await OTP.destroy({
+        where: {
+          created_at: {
+            [Op.lt]: twoMinutesAgo,
+          },
+        },
+      });
+
+      // check if there is any valid , not expired code for the user
+      const otp = await OTP.findOne({
+        where: {
+          phone,
+          created_at: {
+            [Op.gt]: twoMinutesAgo,
+          },
+        },
+      });
+
+      if (otp !== null) {
+        const remainingSeconds = Math.max(
+          0,
+          Math.ceil(
+            (otp.created_at.getTime() + 2 * 60 * 1000 - Date.now()) / 1000
+          )
+        );
+        return res.status(400).json({ message: `${remainingSeconds} ثانیه دیگر دوباره امتحان کنید.` });
+      }
+
+      const otpCode = Math.floor(Math.random() * 9000 + 1000);
+      const hashedCode = await bcrypt.hash(otpCode.toString(), 10);
+
+      await OTP.create({
+        code: hashedCode,
+        phone,
+      });
+
+      const message = `کد تایید شما: ${otpCode}\nدانشگاه بوعلی سینا`;
+      await sendSMS(phone, message);
+
+      return res.status(200).json({ message: "کد با موفقیت ارسال شد!" });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(500).json({ message: "خطای داخلی سرور!" });
+    }
+  }
+
+  // verify otp
+  static async verifyOTP(req: Request, res: Response) {
+    try {
+      const { phone, code } = req.body;
+
+      if (!phone || !code) {
+        return res
+          .status(400)
+          .json({ message: "شماره همراه و کد الزامی هستند!" });
+      }
+
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+      const otp = await OTP.findOne({
+        where: {
+          phone,
+          created_at: {
+            [Op.gt]: twoMinutesAgo,
+          },
+        },
+      });
+
+      if (!otp) {
+        return res.status(404).json({
+          message: "کد منسوخ شده یا وجود ندارد. دوباره درخواست کد دهید.",
+        });
+      }
+
+      const isCodeRight = await bcrypt.compare(code, otp.code);
+
+      if (!isCodeRight) {
+        otp.efforts_remained = otp.efforts_remained - 1;
+        await otp.save();
+
+        if (otp.efforts_remained === 0) {
+          return res.status(400).json({
+            message:
+              "تعداد تلاش های اشتباه بیش از حد مجاز شد. لطفا دوباره درخواست کد بدهید.",
+          });
+        }
+
+        return res.status(400).json({
+          message: "کد وارد شده درست نمی باشد!",
+        });
+      }
+
+      // change the OTP status
+      otp.status = OTPStatus.VERIFIED;
+      await otp.save();
+
+      return res.status(200).json({ message: "کد تایید شد!" });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "خطای داخلی سرور!" });
     }
   }
 }

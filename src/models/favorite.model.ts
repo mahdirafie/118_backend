@@ -12,10 +12,20 @@ Favorite.init({
     cid: {
         type: DataTypes.INTEGER.UNSIGNED,
         primaryKey: true,
+        references: {
+            model: Contactable,
+            key: 'cid'
+        },
+        onDelete: "CASCADE",
     },
     favcat_id: {
         type: DataTypes.INTEGER.UNSIGNED,
-        primaryKey: true
+        primaryKey: true,
+        references: {
+            model: FavoriteCategory,
+            key: 'favcat_id'
+        },
+        onDelete: "CASCADE"
     }
 }, {sequelize, tableName: 'favorites', timestamps: false});
 

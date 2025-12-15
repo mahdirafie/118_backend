@@ -19,6 +19,7 @@ import SharesToEmployee from "./shares_to_employee.model.js";
 import Post from "./post.model.js";
 import Space from "./space.model.js";
 import ESPRelationship from "./esp_relationship.model.js";
+import SearchHistory from './search_history.model.js';
 
 export const applyAssociations = () => {
     // Faculty -> Department
@@ -110,4 +111,16 @@ export const applyAssociations = () => {
     Employee.hasMany(ESPRelationship, { foreignKey: 'emp_id' });
     Post.hasMany(ESPRelationship, { foreignKey: 'pid' });
     Space.hasMany(ESPRelationship, { foreignKey: 'sid' });
+
+    // User and SearchHistory relationship
+    User.hasMany(SearchHistory, {foreignKey: 'uid'});
+    SearchHistory.belongsTo(User, {foreignKey: 'uid'});
+
+    // Faculty and Space relationship(filtering purpose)
+    Faculty.hasMany(Space, {foreignKey: 'fid'});
+    Space.belongsTo(Faculty, {foreignKey: 'fid'});
+
+    // Faculty and Post relationship(filtering purpose)
+    Faculty.hasMany(Post, {foreignKey: 'fid'});
+    Post.belongsTo(Faculty, {foreignKey: 'fid'});
 };
