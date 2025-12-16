@@ -35,6 +35,6 @@ SearchHistory.init({
         allowNull: false,
         defaultValue: 0
     }
-}, {sequelize,tableName: 'search_hitories', timestamps: true});
+}, {sequelize,tableName: 'search_histories', timestamps: true});
 
 export default SearchHistory;

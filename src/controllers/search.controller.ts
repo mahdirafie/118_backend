@@ -10,6 +10,7 @@ import Post from "../models/post.model.js";
 import Space from "../models/space.model.js";
 import ESPRelationship from "../models/esp_relationship.model.js";
 import SearchHistory from "../models/search_history.model.js";
+import EmployeeOperation from "../models/employee_operations.model.js";
 
 export class SearchController {
     static async search(req: Request, res: Response) {
@@ -34,6 +35,7 @@ export class SearchController {
                         { '$User.full_name$': { [Op.like]: `%${query}%` } },
                         { '$User.phone$': { [Op.like]: `%${query}%` } },
                         { '$ESPRelationships.Post.pname$': { [Op.like]: `%${query}%` } },
+                        { '$EmployeeOperations.operation$': { [Op.like]: `%${query}%` } },
                     ],
                 },
                 attributes: ['emp_id', 'uid', 'cid'],
@@ -73,6 +75,10 @@ export class SearchController {
                                 where: faculty_id ? { fid: faculty_id } : undefined
                             }
                         ]
+                    },
+                    {
+                        model: EmployeeOperation,
+                        required: true
                     }
                 ],
             });
@@ -88,6 +94,7 @@ export class SearchController {
                         { '$User.full_name$': { [Op.like]: `%${query}%` } },
                         { '$User.phone$': { [Op.like]: `%${query}%` } },
                         { '$ESPRelationships.Post.pname$': { [Op.like]: `%${query}%` } },
+                        { '$EmployeeOperations.operation$': { [Op.like]: `%${query}%` } }
                     ],
                 },
                 include: [
@@ -113,6 +120,10 @@ export class SearchController {
                                 where: faculty_id ? { fid: faculty_id } : undefined
                             }
                         ]
+                    },
+                    {
+                        model: EmployeeOperation,
+                        required: true
                     }
                 ]
             });

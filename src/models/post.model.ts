@@ -7,7 +7,7 @@ class Post extends Model {
   declare cid: ForeignKey<Contactable["cid"]>;
   declare pname: string;
   declare description: string;
-  declare fid: ForeignKey<Faculty['fid']>;
+  declare fid: ForeignKey<Faculty['fid']> | null;
 }
 
 Post.init(

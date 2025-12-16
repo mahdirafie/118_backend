@@ -9,6 +9,8 @@ class Department extends Model {
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
+
+  declare Faculty?: Faculty;
 }
 
 Department.init(

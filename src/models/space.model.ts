@@ -7,7 +7,7 @@ class Space extends Model {
     declare cid: ForeignKey<Contactable['cid']>;
     declare sname: string;
     declare room: string;
-    declare fid: ForeignKey<Faculty['fid']>;
+    declare fid: ForeignKey<Faculty['fid']> | null;
 }
 
 Space.init({

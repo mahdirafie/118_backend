@@ -1,5 +1,6 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import Employee from "./employee.model.js";
 
 class User extends Model {
   declare uid: number;
@@ -10,6 +11,8 @@ class User extends Model {
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
+
+  declare Employee?: Employee;
 }
 
 User.init(

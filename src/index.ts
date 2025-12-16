@@ -7,7 +7,7 @@ import cors from "cors";
 // Controllers
 import { AuthController } from "./controllers/auth.controller.js";
 import { FavoriteController } from "./controllers/favorite.controller.js";
-import { ProfileController } from "./controllers/profile.controller.js";
+import { UserController } from "./controllers/user.controller.js";
 import { EmployeeController } from "./controllers/employee.controller.js";
 import { SearchController } from "./controllers/search.controller.js";
 import { FacultyController } from "./controllers/faculty.controller.js";
@@ -61,10 +61,12 @@ app.get('/faculty/get-all', FacultyController.getAllFaculties);
 app.get('/faculty/get-faculty-departments/:fid', FacultyController.getDepartmentsForFaculty);
 
 // profile related routes
-app.get('/profile/:user_id', ProfileController.getUserProfile);
+app.get('/profile/:user_id', UserController.getUserProfile);
+app.get('/related/:uid', UserController.getUserRelatedContacts);
 
 // employee related routes
 app.get('/employee/workareas', EmployeeController.getDistinctWorkAreas);
+app.post('/employee/create-op', EmployeeController.createEmployeeOperation);
 
 // search related routes
 app.get('/search', SearchController.search);
