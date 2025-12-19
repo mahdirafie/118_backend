@@ -9,9 +9,10 @@ export class ESPRelationshipController {
         try {
             const {emp_id, sid, pid} = req.body;
 
+            let emp;
             if(emp_id) {
-                const emp = await Employee.findByPk(emp_id);
-                if(!emp_id) {
+                emp = await Employee.findByPk(emp_id);
+                if(!emp) {
                     return res.status(400).json({message: "این کارمند وجود ندارد!"});
                 }
             }
@@ -30,7 +31,7 @@ export class ESPRelationshipController {
                 }
             }
 
-            ESPRelationship.create({emp_id, sid, pid});
+            ESPRelationship.create({emp_id: emp?.cid, sid, pid});
 
             return res.status(201).json({message: "رابطه فضاو پست و کارمند ساخته شد!"});
 

@@ -1,6 +1,7 @@
 import { Model, DataTypes, ForeignKey } from "sequelize";
 import sequelize from "../config/database.js";
 import User from "./user.model.js";
+import Contactable from "./contactable.model.js";
 
 class FavoriteCategory extends Model {
   declare favcat_id: number;
@@ -8,6 +9,7 @@ class FavoriteCategory extends Model {
   declare uid: ForeignKey<User["uid"]>;
 
   declare readonly createdAt: Date;
+  declare Contactables?: Contactable[];
 }
 
 FavoriteCategory.init(

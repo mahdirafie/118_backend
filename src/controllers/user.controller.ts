@@ -72,7 +72,7 @@ export class UserController {
             const { uid } = req.params;
 
             if (!uid) {
-                return res.status(400).json({ message: "لطفا آیدی کاربر مورد نظر را وارد نمایید!" });
+                return res.status(400).json({ message: "Please enter the user ID!" });
             }
 
             const user = await User.findOne({
@@ -114,7 +114,7 @@ export class UserController {
             });
 
             if (!user) {
-                return res.status(404).json({ message: "چنین کاربری وجود ندارد!" });
+                return res.status(404).json({ message: "User not found!" });
             }
 
             let user_type: string = "general";
@@ -207,10 +207,17 @@ export class UserController {
 
                     if (facId !== null) {
                         employees = await Employee.findAll({
-                            attributes: ['emp_id', 'cid',
-                                [col('ESPRelationships.Post.pname'), 'post']
+                            attributes: [
+                                'cid',
+                                [col('ESPRelationships.Post.pname'), 'post'],
+                                [col('User.full_name'), 'full_name']
                             ],
                             include: [
+                                {
+                                    model: User,
+                                    attributes: [],
+                                    required: true
+                                },
                                 {
                                     model: EmployeeFacultyMemeber,
                                     attributes: [],
@@ -244,7 +251,8 @@ export class UserController {
                         });
 
                         posts = await Post.findAll({
-                            attributes: ['cid',
+                            attributes: [
+                                'cid',
                                 'pname',
                                 [col('ESPRelationships.Employee.User.full_name'), 'employee']
                             ],
@@ -276,7 +284,8 @@ export class UserController {
                         });
 
                         spaces = await Space.findAll({
-                            attributes: ['cid',
+                            attributes: [
+                                'cid',
                                 'sname',
                                 [col('ESPRelationships.Post.pname'), 'post']
                             ],
@@ -303,14 +312,19 @@ export class UserController {
                     } else {
                         employees = await Employee.findAll({
                             attributes: [
-                                'emp_id',
                                 'cid',
-                                'createdAt'
+                                'createdAt',
+                                [col('User.full_name'), 'full_name']
                             ],
                             include: [
                                 {
+                                    model: User,
+                                    // attributes: [],
+                                    required: true
+                                },
+                                {
                                     model: ESPRelationship,
-                                    attributes: [],
+                                    // attributes: [],
                                     required: false,
                                     include: [
                                         {
@@ -325,12 +339,14 @@ export class UserController {
                         });
 
                         posts = await Post.findAll({
-                            attributes: ['cid', 'pname',
+                            attributes: [
+                                'cid',
+                                'pname'
                             ],
                             include: [
                                 {
                                     model: ESPRelationship,
-                                    attributes: [],
+                                    // attributes: [],
                                     required: false,
                                     include: [
                                         {
@@ -348,13 +364,16 @@ export class UserController {
                             ],
                             limit: 10
                         });
+
                         spaces = await Space.findAll({
-                            attributes: ['cid', 'sname',
+                            attributes: [
+                                'cid',
+                                'sname'
                             ],
                             include: [
                                 {
                                     model: ESPRelationship,
-                                    attributes: [],
+                                    // attributes: [],
                                     required: false,
                                     include: [
                                         {
@@ -371,8 +390,8 @@ export class UserController {
                         employees = employees.map(emp => {
                             const empData = emp.toJSON();
                             return {
-                                emp_id: empData.emp_id,
                                 cid: empData.cid,
+                                full_name: empData.full_name,
                                 post: empData.ESPRelationships?.[0]?.Post?.pname || null
                             };
                         });
@@ -398,14 +417,19 @@ export class UserController {
                 } else {
                     employees = await Employee.findAll({
                         attributes: [
-                            'emp_id',
                             'cid',
-                            'createdAt'
+                            'createdAt',
+                            [col('User.full_name'), 'full_name']
                         ],
                         include: [
                             {
+                                model: User,
+                                // attributes: [],
+                                required: true
+                            },
+                            {
                                 model: ESPRelationship,
-                                attributes: [],
+                                // attributes: [],
                                 required: false,
                                 include: [
                                     {
@@ -420,12 +444,14 @@ export class UserController {
                     });
 
                     posts = await Post.findAll({
-                        attributes: ['cid', 'pname',
+                        attributes: [
+                            'cid',
+                            'pname'
                         ],
                         include: [
                             {
                                 model: ESPRelationship,
-                                attributes: [],
+                                // attributes: [],
                                 required: false,
                                 include: [
                                     {
@@ -443,13 +469,16 @@ export class UserController {
                         ],
                         limit: 10
                     });
+
                     spaces = await Space.findAll({
-                        attributes: ['cid', 'sname',
+                        attributes: [
+                            'cid',
+                            'sname'
                         ],
                         include: [
                             {
                                 model: ESPRelationship,
-                                attributes: [],
+                                // attributes: [],
                                 required: false,
                                 include: [
                                     {
@@ -466,8 +495,8 @@ export class UserController {
                     employees = employees.map(emp => {
                         const empData = emp.toJSON();
                         return {
-                            emp_id: empData.emp_id,
                             cid: empData.cid,
+                            full_name: empData.full_name,
                             post: empData.ESPRelationships?.[0]?.Post?.pname || null
                         };
                     });
@@ -495,17 +524,22 @@ export class UserController {
 
                 if (!facId) {
                     return res.status(400).json({
-                        message: "کاربر عضو هیئت علمی اطلاعات دانشکده ناقص دارد!"
+                        message: "Faculty member user has incomplete faculty information!"
                     });
                 }
 
                 employees = await Employee.findAll({
                     attributes: [
-                        'emp_id',
                         'cid',
-                        [col('ESPRelationships.Post.pname'), 'post']
+                        [col('ESPRelationships.Post.pname'), 'post'],
+                        [col('User.full_name'), 'full_name']
                     ],
                     include: [
+                        {
+                            model: User,
+                            attributes: [],
+                            required: true
+                        },
                         {
                             model: EmployeeFacultyMemeber,
                             attributes: [],
@@ -533,7 +567,9 @@ export class UserController {
                 });
 
                 posts = await Post.findAll({
-                    attributes: ['cid', 'pname',
+                    attributes: [
+                        'cid',
+                        'pname',
                         [col('ESPRelationships.Employee.User.full_name'), 'employee']
                     ],
                     include: [
@@ -595,12 +631,12 @@ export class UserController {
 
                 if (!workarea || !empId) {
                     return res.status(400).json({
-                        message: "کاربر کارمند اطلاعات ناقص دارد!"
+                        message: "Employee user has incomplete information!"
                     });
                 }
 
                 employees = await Employee.findAll({
-                    attributes: ['emp_id',
+                    attributes: [
                         'cid',
                         [col('User.full_name'), 'full_name'],
                         [col('ESPRelationships.Post.pname'), 'post']
@@ -768,7 +804,7 @@ export class UserController {
 
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ message: "خطا داخلی سرور!" });
+            return res.status(500).json({ message: "Internal server error!" });
         }
     }
 }

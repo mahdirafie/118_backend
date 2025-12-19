@@ -20,6 +20,8 @@ import { applyAssociations } from "./models/associations.js";
 import { OTP } from "./models/otp.model.js";
 import ESPRelationship from "./models/esp_relationship.model.js";
 import { ESPRelationshipController } from "./controllers/esp.controller.js";
+import { ContactableController } from "./controllers/contactable.controller.js";
+import { GroupController } from "./controllers/group.controller.js";
 
 const app = express();
 const PORT = 4000;
@@ -48,11 +50,13 @@ app.post("/auth/register-employeef", AuthController.registerFacultyEmployee);
 app.post("/auth/register-employeen", AuthController.registerNonFacultyEmployee);
 
 // favorite related routes
-app.post('/favorite/add-favorite-category', FavoriteController.addFavoriteCategory);
+app.post('/favorite/add-fav', FavoriteController.addFavorite);
 app.post('/favorite/user/get-fav-cats', FavoriteController.getUserFavoriteCategories);
 app.post('/favorite/add-fav-cat', FavoriteController.addFavoriteCategory);
 app.delete('/favorite/delete-cat', FavoriteController.deleteFavoriteCategory);
 app.put('/favorite/update-cat', FavoriteController.updateFavoriteCategory);
+app.delete('/favorite/del-fav', FavoriteController.deleteContactableFromFavorite);
+app.get('/favorite/get-favcat-favs/:uid/:favcat_id', FavoriteController.getFavCatFavorites);
 
 // faculty related routes
 app.post('/faculty/create', FacultyController.createFaculty);
@@ -82,6 +86,14 @@ app.post('/space/create', SpaceController.createSpace);
 
 // esp relationship related routes
 app.post('/esp/create', ESPRelationshipController.createESPRelationship);
+
+// contactable related routes
+app.get('/contactable/info/:cid/:uid', ContactableController.getContactableInfo);
+
+// group related routes
+app.post('/group/create', GroupController.createGroup);
+app.get('/group/get-emp-groups/:emp_id', GroupController.getGroupsByEmployee);
+app.get('/group/get-group-members/:gid', GroupController.getGroupMembers);
 
 // -------------------------
 // Connect to DB and sync models

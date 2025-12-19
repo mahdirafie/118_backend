@@ -47,8 +47,8 @@ export const applyAssociations = () => {
     Employee.belongsTo(User, { foreignKey: 'uid' });
 
     // Contactable -> Employee
-    Contactable.hasOne(Employee, {foreignKey: 'cid'});
-    Employee.belongsTo(Contactable, {foreignKey: 'cid'});
+    Contactable.hasOne(Employee, { foreignKey: 'cid' });
+    Employee.belongsTo(Contactable, { foreignKey: 'cid' });
 
     // Employee -> EmployeeFacultyMember / EmployeeNonFacultyMember
     Employee.hasOne(EmployeeFacultyMember, { foreignKey: 'emp_id' });
@@ -74,8 +74,19 @@ export const applyAssociations = () => {
     Contactable.belongsToMany(Employee, { through: Reminder, foreignKey: 'cid', otherKey: 'emp_id' });
 
     // Employee <-> Group (GroupMembership)
-    Employee.belongsToMany(Group, { through: GroupMembership, foreignKey: 'emp_id', otherKey: 'gid' });
-    Group.belongsToMany(Employee, { through: GroupMembership, foreignKey: 'gid', otherKey: 'emp_id' });
+    Employee.belongsToMany(Group, { through: GroupMembership, foreignKey: 'emp_id', otherKey: 'gid', as: 'memberGroups' });
+    Group.belongsToMany(Employee, { through: GroupMembership, foreignKey: 'gid', otherKey: 'emp_id', as: 'members' });
+
+    Employee.hasMany(Group, {
+        foreignKey: 'emp_id',
+        as: 'ownedGroups'
+    });
+
+    Group.belongsTo(Employee, {
+        foreignKey: 'emp_id',
+        as: 'owner'
+    });
+
 
     // SharesToGroup ternary relationship
     SharesToGroup.belongsTo(Employee, { foreignKey: 'emp_id' });
@@ -113,14 +124,14 @@ export const applyAssociations = () => {
     Space.hasMany(ESPRelationship, { foreignKey: 'sid' });
 
     // User and SearchHistory relationship
-    User.hasMany(SearchHistory, {foreignKey: 'uid'});
-    SearchHistory.belongsTo(User, {foreignKey: 'uid'});
+    User.hasMany(SearchHistory, { foreignKey: 'uid' });
+    SearchHistory.belongsTo(User, { foreignKey: 'uid' });
 
     // Faculty and Space relationship(filtering purpose)
-    Faculty.hasMany(Space, {foreignKey: 'fid'});
-    Space.belongsTo(Faculty, {foreignKey: 'fid'});
+    Faculty.hasMany(Space, { foreignKey: 'fid' });
+    Space.belongsTo(Faculty, { foreignKey: 'fid' });
 
     // Faculty and Post relationship(filtering purpose)
-    Faculty.hasMany(Post, {foreignKey: 'fid'});
-    Post.belongsTo(Faculty, {foreignKey: 'fid'});
+    Faculty.hasMany(Post, { foreignKey: 'fid' });
+    Post.belongsTo(Faculty, { foreignKey: 'fid' });
 };
