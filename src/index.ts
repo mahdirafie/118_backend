@@ -22,6 +22,8 @@ import ESPRelationship from "./models/esp_relationship.model.js";
 import { ESPRelationshipController } from "./controllers/esp.controller.js";
 import { ContactableController } from "./controllers/contactable.controller.js";
 import { GroupController } from "./controllers/group.controller.js";
+import { AttributeController } from "./controllers/attribute.controller.js";
+import { authenticate } from "./middlewares/authenticate.middleware.js";
 
 const app = express();
 const PORT = 4000;
@@ -43,20 +45,20 @@ app.get("/", (req: Request, res: Response) => {
 app.post("/auth/signup", AuthController.signupUser);
 app.post("/auth/login", AuthController.loginUser);
 app.post("/auth/refresh", AuthController.refreshToken);
-app.post("/auth/createemp", AuthController.createEmployee);
 app.post("/auth/send-otp", AuthController.sendOTP);
 app.post("/auth/verify-otp", AuthController.verifyOTP);
+app.post("/auth/createemp", AuthController.createEmployee);
 app.post("/auth/register-employeef", AuthController.registerFacultyEmployee);
 app.post("/auth/register-employeen", AuthController.registerNonFacultyEmployee);
 
 // favorite related routes
-app.post('/favorite/add-fav', FavoriteController.addFavorite);
-app.post('/favorite/user/get-fav-cats', FavoriteController.getUserFavoriteCategories);
-app.post('/favorite/add-fav-cat', FavoriteController.addFavoriteCategory);
-app.delete('/favorite/delete-cat', FavoriteController.deleteFavoriteCategory);
-app.put('/favorite/update-cat', FavoriteController.updateFavoriteCategory);
-app.delete('/favorite/del-fav', FavoriteController.deleteContactableFromFavorite);
-app.get('/favorite/get-favcat-favs/:uid/:favcat_id', FavoriteController.getFavCatFavorites);
+app.post('/favorite/add-fav', authenticate, FavoriteController.addFavorite);
+app.get('/favorite/user/get-fav-cats',authenticate, FavoriteController.getUserFavoriteCategories);
+app.post('/favorite/add-fav-cat', authenticate, FavoriteController.addFavoriteCategory);
+app.delete('/favorite/delete-cat/:favcat_id', authenticate, FavoriteController.deleteFavoriteCategory);
+app.put('/favorite/update-cat', authenticate, FavoriteController.updateFavoriteCategory);
+app.delete('/favorite/del-fav/:cid', authenticate, FavoriteController.deleteContactableFromFavorite);
+app.get('/favorite/get-favcat-favs/:favcat_id', authenticate, FavoriteController.getFavCatFavorites);
 
 // faculty related routes
 app.post('/faculty/create', FacultyController.createFaculty);
@@ -65,8 +67,8 @@ app.get('/faculty/get-all', FacultyController.getAllFaculties);
 app.get('/faculty/get-faculty-departments/:fid', FacultyController.getDepartmentsForFaculty);
 
 // profile related routes
-app.get('/profile/:user_id', UserController.getUserProfile);
-app.get('/related/:uid', UserController.getUserRelatedContacts);
+app.get('/profile', authenticate, UserController.getUserProfile);
+app.get('/related',authenticate, UserController.getUserRelatedContacts);
 
 // employee related routes
 app.get('/employee/workareas', EmployeeController.getDistinctWorkAreas);
@@ -74,9 +76,9 @@ app.post('/employee/create-op', EmployeeController.createEmployeeOperation);
 
 // search related routes
 app.get('/search', SearchController.search);
-app.post('/search/history/create', SearchController.createSearchHistory);
-app.get('/search/user-histories/:uid', SearchController.getSearchHistory);
-app.delete('/search/history/delete/:shid', SearchController.deleteSearchHistory);
+app.post('/search/history/create',authenticate, SearchController.createSearchHistory);
+app.get('/search/user-histories', authenticate, SearchController.getSearchHistory);
+app.delete('/search/history/delete/:shid',authenticate, SearchController.deleteSearchHistory);
 
 // post related routes
 app.post('/post/create', PostController.createPost);
@@ -88,12 +90,20 @@ app.post('/space/create', SpaceController.createSpace);
 app.post('/esp/create', ESPRelationshipController.createESPRelationship);
 
 // contactable related routes
-app.get('/contactable/info/:cid/:uid', ContactableController.getContactableInfo);
+app.get('/contactable/info/:cid', authenticate, ContactableController.getContactableInfo);
 
 // group related routes
-app.post('/group/create', GroupController.createGroup);
-app.get('/group/get-emp-groups/:emp_id', GroupController.getGroupsByEmployee);
-app.get('/group/get-group-members/:gid', GroupController.getGroupMembers);
+app.post('/group/create',authenticate, GroupController.createGroup);
+app.get('/group/get-emp-groups', authenticate, GroupController.getGroupsByEmployee);
+app.get('/group/get-group-members/:gid', authenticate, GroupController.getGroupMembers);
+app.delete('/group/delete/:gid', authenticate, GroupController.deleteGroup);
+app.post('/group/add-member', authenticate, GroupController.addEmpToGroup);
+app.delete('/group/remove-member/:gid/:emp_id', authenticate, GroupController.removeMemberFromGroup);
+
+// attribute related routes
+app.get('/attribute/get-all', authenticate, AttributeController.getAllTheAttributes);
+app.post('/attribute/create', AttributeController.createAttribute);
+app.post('/attribute/set-atts-values', authenticate, AttributeController.setAttributeValues);
 
 // -------------------------
 // Connect to DB and sync models

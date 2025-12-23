@@ -18,7 +18,8 @@ import FavoriteCategory from "../models/favorite_category.model.js";
 export class UserController {
     static async getUserProfile(req: Request, res: Response) {
         try {
-            const { user_id } = req.params;
+            const {uid} = req.info!;
+            const user_id = uid;
             if (!user_id) {
                 return res.status(400).json({ message: "لطفا آیدی یوزر مورد نظر را وارد نمایید!" });
             }
@@ -69,7 +70,7 @@ export class UserController {
 
     static async getUserRelatedContacts(req: Request, res: Response) {
         try {
-            const { uid } = req.params;
+            const { uid } = req.info!;
 
             if (!uid) {
                 return res.status(400).json({ message: "Please enter the user ID!" });

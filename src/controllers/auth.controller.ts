@@ -17,6 +17,8 @@ import { OTPStatus } from "../common/OTPStatus.js";
 import EmployeeFacultyMemeber from "../models/employee_fm.model.js";
 import EmployeeNonFacultyMember from "../models/employee_nfm.model.js";
 import Department from "../models/department.model.js";
+import PersonalAttributeValue from "../models/personal_att_val.model.js";
+import PersonalAttribute from "../models/personal_att.model.js";
 
 export class AuthController {
   // user signup
@@ -126,13 +128,16 @@ export class AuthController {
       const payload = {
         uid: user.uid,
         type: employee ? "employee" : "general",
+        emp_id: employee? employee.emp_id : null
       };
 
       const accessToken = createAccessToken(payload);
       const refreshToken = createRefreshToken(payload);
 
+      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
       // Store refresh token in DB
-      await user.update({ refresh_token: refreshToken });
+      await user.update({ refresh_token: hashedRefreshToken });
 
       return res.status(200).json({
         message: employee
@@ -151,10 +156,9 @@ export class AuthController {
     }
   }
 
-  // refresh the access token
+  // refresh the access token and refresh token
   static async refreshToken(req: Request, res: Response) {
     const { refresh_token } = req.body;
-    console.log("refresh token called!");
     if (!refresh_token) {
       return res.status(400).json({ message: "ارسال رفرش توکن الزامی است!" });
     }
@@ -178,12 +182,14 @@ export class AuthController {
       // Create new tokens
       const newAccessToken = createAccessToken({
         uid: payload.uid,
-        type: payload.type
+        type: payload.type,
+        emp_id: payload.emp_id
       });
 
       const newRefreshToken = createRefreshToken({
         uid: payload.uid,
-        type: payload.type
+        type: payload.type,
+        emp_id: payload.emp_id
       });
 
       // Hash and store the new refresh token (rotation)
@@ -193,7 +199,6 @@ export class AuthController {
         { refresh_token: hashedRefresh },
         { where: { uid: payload.uid } }
       );
-
       return res.status(200).json({
         message: "توکن ها نوسازی شدند!",
         access_token: newAccessToken,
@@ -354,6 +359,20 @@ export class AuthController {
           { transaction: t }
         );
 
+        // create the personal attribute values
+        const attributes = await PersonalAttribute.findAll({
+          attributes: ['att_id'],
+          transaction: t
+        });
+
+        const attValues = attributes.map((att) => ({
+          emp_id: employee.emp_id,
+          value: null,
+          att_id: att.att_id
+        }));
+
+        await PersonalAttributeValue.bulkCreate(attValues, { transaction: t });
+
         await t.commit();
 
         return res
@@ -434,6 +453,20 @@ export class AuthController {
           { workarea: workarea, emp_id: employee.emp_id },
           { transaction: t }
         );
+
+        // create the personal attribute values
+        const attributes = await PersonalAttribute.findAll({
+          attributes: ['att_id'],
+          transaction: t
+        });
+
+        const attValues = attributes.map((att) => ({
+          emp_id: employee.emp_id,
+          value: null,
+          att_id: att.att_id
+        }));
+
+        await PersonalAttributeValue.bulkCreate(attValues, { transaction: t });
 
         await t.commit();
 

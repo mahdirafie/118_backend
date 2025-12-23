@@ -3,27 +3,34 @@
     /* Modern JavaScript */
     "target": "ES2022",
     "module": "NodeNext",
-    "lib": ["ES2022"],
-
+    "lib": [
+      "ES2022"
+    ],
     /* Node.js ESM Support */
     "moduleResolution": "NodeNext",
-    "types": ["node"],
-
+    "types": [
+      "node"
+    ],
     /* Paths & Output */
     "rootDir": "./src",
     "outDir": "./dist",
-
     // "allowImportingTsExtensions": true,
-
     /* Interop & Safety */
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-
     /* Debug */
     "sourceMap": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ]
   },
-  "include": ["src"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

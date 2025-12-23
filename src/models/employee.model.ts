@@ -16,6 +16,7 @@ class Employee extends Model {
 
   declare EmployeeFacultyMemeber?: EmployeeFacultyMemeber;
   declare EmployeeNonFacultyMember?: EmployeeNonFacultyMember;
+  declare User?: User;
 }
 
 Employee.init(

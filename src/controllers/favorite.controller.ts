@@ -11,7 +11,9 @@ export class FavoriteController {
   // add category
   static async addFavoriteCategory(req: Request, res: Response) {
     try {
-      const { user_id, category_title } = req.body;
+      const { category_title } = req.body;
+      const {uid} = req.info!;
+      const user_id = uid;
       if (!user_id || !category_title) {
         return res
           .status(400)
@@ -44,7 +46,7 @@ export class FavoriteController {
   // remove a favorite category
   static async deleteFavoriteCategory(req: Request, res: Response) {
     try {
-      const { favcat_id } = req.body;
+      const { favcat_id } = req.params;
       if (!favcat_id) {
         return res.status(400).json({ message: "لطفا شماره دسته بندی را وارد کنید!" });
       }
@@ -101,7 +103,37 @@ export class FavoriteController {
           .json({ message: "این مورد قبلا به مورد علاقه ها اضافه شده است!" });
       }
 
+      const favCat = await FavoriteCategory.findByPk(favcat_id);
+      const categoryNamedAll = await FavoriteCategory.findOne({
+        where: {
+          title: "همه",
+          uid: favCat?.uid
+        }
+      });
+      if (!categoryNamedAll) {
+        return res.status(400).json({ message: "لطفا برای کاربر یک دسته بندی به اسم -همه- اضافه کنید!" });
+      }
+
       await Favorite.create({ cid, favcat_id });
+
+      // check if the favorite category named همه contains the cid
+      const doesExistInCategoryNamedAll = await FavoriteCategory.findOne({where: {
+        favcat_id: categoryNamedAll.favcat_id,
+      },
+      include: [
+        {
+          model: Contactable,
+          required: true,
+          where: {cid},
+          through: {
+            attributes: []
+          }
+        }
+      ]
+    });
+      if (favCat?.title !== "همه" && !doesExistInCategoryNamedAll) {
+        await Favorite.create({ cid, favcat_id: categoryNamedAll.favcat_id });
+      }
       return res
         .status(201)
         .json({ message: "با موفقیت به مورد علاقه ها اضافه شد!" });
@@ -114,7 +146,7 @@ export class FavoriteController {
   // get user favorite categories
   static async getUserFavoriteCategories(req: Request, res: Response) {
     try {
-      const { uid } = req.body;
+      const { uid } = req.info!;
 
       if (!uid) {
         return res.status(400).json({ message: "لطفا اطلاعات لازم را به سرور بفرستید!" });
@@ -143,7 +175,8 @@ export class FavoriteController {
   // delete contactable from favorites
   static async deleteContactableFromFavorite(req: Request, res: Response) {
     try {
-      const { cid, uid } = req.body;
+      const { cid } = req.params;
+      const { uid } = req.info!;
 
       if (!cid || !uid) {
         return res.status(400).json({
@@ -173,8 +206,6 @@ export class FavoriteController {
         },
       });
 
-      console.log("DELETE SUCCESSFULLY");
-
       return res.status(200).json({
         message: "مخاطب با موفقیت از علاقه‌مندی‌ها حذف شد!",
         deleted_count: deletedCount,
@@ -191,7 +222,8 @@ export class FavoriteController {
   // get category favorites
   static async getFavCatFavorites(req: Request, res: Response) {
     try {
-      const { favcat_id, uid } = req.params;
+      const { favcat_id } = req.params;
+      const {uid} = req.info!;
 
       if (!favcat_id || !uid) {
         return res.status(400).json({
@@ -277,5 +309,4 @@ export class FavoriteController {
       });
     }
   }
-
 }

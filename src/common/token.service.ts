@@ -17,7 +17,7 @@ export function createAccessToken(payload: object) {
 
 export function createRefreshToken(payload: object) {
   return jwt.sign(payload, getSecret("REFRESH_TOKEN_SECRET"), {
-    expiresIn: "7d",
+    expiresIn: "60d",
   });
 }
 

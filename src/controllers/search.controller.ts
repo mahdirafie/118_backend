@@ -254,7 +254,8 @@ export class SearchController {
 
     static async createSearchHistory(req: Request, res: Response) {
         try {
-            const { uid, query } = req.body;
+            const { query } = req.body;
+            const { uid } = req.info!;
 
             if (!uid || !query) {
                 return res.status(400).json({ message: "لطفا همه اطلاعات لازم را وارد نمایید!" });
@@ -278,7 +279,7 @@ export class SearchController {
 
     static async getSearchHistory(req: Request, res: Response) {
         try {
-            const { uid } = req.params;
+            const { uid } = req.info!;
             if (!uid) {
                 return res.status(400).json({ message: "لطفا آیدی کاربر را وارد نمایید!" });
             }

@@ -20,12 +20,7 @@ PersonalAttributeValue.init(
     },
     value: {
         type: DataTypes.STRING,
-        allowNull: false,
-    },
-    is_sharable: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true
+        allowNull: true,
     },
     att_id: {
         type: DataTypes.INTEGER.UNSIGNED,

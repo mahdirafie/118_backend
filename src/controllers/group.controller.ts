@@ -15,11 +15,22 @@ export class GroupController {
     static async createGroup(req: Request, res: Response) {
         const t = await sequelize.transaction();
         try {
-            const { gname, emp_id, template } = req.body;
+            const { gname, template } = req.body;
+            const {emp_id} = req.info!;
 
             if (!gname || !emp_id) {
                 await t.rollback();
                 return res.status(400).json({ message: "لطفا اطلاعات مورد نیاز را وارد نمایید!" });
+            }
+
+            const emp = await Employee.findOne({
+                where: {emp_id},
+                transaction: t
+            });
+
+            if (!emp) {
+                await t.rollback();
+                return res.status(400).json({ message: "این کاربر وجود ندارد!" });
             }
 
             let group: Group | null = await Group.findOne({
@@ -125,9 +136,6 @@ export class GroupController {
                     facMems.forEach((facMem) => {
                         employees_to_add.push({ emp_id: facMem.emp_id, gid: g.gid });
                     });
-                } else {
-                    await t.rollback();
-                    return res.status(404).json({ message: "کارمند و template با هم توافق ندارند!" });
                 }
             } else if (emp_type === "NF") {
                 if (template === "workarea") {
@@ -147,9 +155,6 @@ export class GroupController {
                     workareaEmps.forEach((workareaEmp) => {
                         employees_to_add.push({ emp_id: workareaEmp.emp_id, gid: g.gid });
                     });
-                } else {
-                    await t.rollback();
-                    return res.status(404).json({ message: "کارمند و template با هم توافق ندارند!" });
                 }
             }
 
@@ -174,13 +179,43 @@ export class GroupController {
     // get groups for a specific employee
     static async getGroupsByEmployee(req: Request, res: Response) {
         try {
-            const { emp_id } = req.params;
+            const { emp_id } = req.info!;
             if (!emp_id) {
                 return res.status(400).json({ message: "لطفا اطلاعات مورد نیاز را وارد نمایید!" });
             }
-            const tempEmp = await Employee.findByPk(emp_id);
+
+            const emp = await Employee.findOne({
+                where: {emp_id}
+            });
+
+            if (!emp) {
+                return res.status(400).json({ message: "کارمند مد نظر پیدا نشد!" });
+            }
+
+
+            const tempEmp = await Employee.findByPk(emp_id, {
+                include: [
+                    {
+                        model: EmployeeFacultyMemeber,
+                        required: false
+                    },
+                    {
+                        model: EmployeeNonFacultyMember,
+                        required: false
+                    }
+                ]
+            });
             if (!tempEmp) {
                 return res.status(400).json({ message: "این کارمند وجود ندارد!" });
+            }
+
+            let user_type: string = "";
+            if (tempEmp.EmployeeFacultyMemeber) {
+                user_type = "employeeF";
+            } else if (tempEmp.EmployeeNonFacultyMember) {
+                user_type = "employeeNF"
+            } else {
+                return res.status(500).json({ message: "ساختار کارمند در پایگاه داده اشتباه است!" });
             }
 
             const groups = await Group.findAll({
@@ -190,6 +225,7 @@ export class GroupController {
 
             return res.status(200).json({
                 message: "گروه ها با موفقیت دریافت شدند!",
+                user_type,
                 groups
             });
         } catch (error) {
@@ -211,14 +247,14 @@ export class GroupController {
                 include: [
                     {
                         model: Employee,
-                        attributes: ['emp_id'],
+                        attributes: ['emp_id', 'cid'],
                         as: 'members',
-                        required: true,
-                        through: {attributes: []},
+                        required: false,
+                        through: { attributes: [] },
                         include: [
                             {
                                 model: User,
-                                required: true,
+                                required: false,
                                 attributes: ['full_name']
                             }
                         ]
@@ -230,13 +266,96 @@ export class GroupController {
                 return res.status(400).json({ message: "گروه وجود ندارد!" });
             }
 
-            return res.status(201).json({
+            const formattedMembers = group.members ? group.members.map(member => ({
+                emp_id: member.emp_id,
+                cid: member.cid,
+                User: {
+                    full_name: member.User ? member.User.full_name : null
+                }
+            })) : [];
+
+            return res.status(200).json({
                 message: "اعضای گروه با موفقیت دریافت شدند!",
-                group: { group_id: group.gid, group_name: group.gname, members: group.members }
+                group: {
+                    group_id: group.gid,
+                    group_name: group.gname,
+                    members: formattedMembers
+                }
             });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "خطای داخلی سرور!" });
+        }
+    }
+
+    // delete a group
+    static async deleteGroup(req: Request, res: Response) {
+        try {
+            const { gid } = req.params;
+            if (!gid) {
+                return res.status(400).json({ message: "لطفا آیدی گروه را وارد کنید!" });
+            }
+
+            const group = await Group.findByPk(gid);
+            if (!group) {
+                return res.status(400).json({ message: "این گروه وجود ندارد!" });
+            }
+
+            await group.destroy();
+            return res.status(200).json({ message: "گروه با موفقیت حذف شد!" });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "خطای داخلی سرور!" });
+        }
+    }
+
+    // add an employee to a group
+    static async addEmpToGroup(req: Request, res: Response) {
+        try {
+            const {gid, emp_id} = req.body;
+            if(!gid || !emp_id) {
+                return res.status(400).json({message: "لطفا همه اطلاعات لازم را وارد نمایید!"});
+            }
+
+            const group = await Group.findByPk(gid);
+            if(!group) {
+                return res.status(400).json({message: "گروه وجود ندارد!"});
+            }
+
+            const groupWithEmp = await GroupMembership.findOne({where: {
+                gid,
+                emp_id
+            }});
+
+            if(groupWithEmp) {
+                return res.status(400).json({message: "کارمند در حال حاضر در گروه وجود دارد!"});
+            }
+
+            await GroupMembership.create({gid, emp_id});
+            return res.status(201).json({message: "کار مند به گروه اضافه شد!"});
+        }catch(error) {
+            console.error(error);
+            return res.status(500).json({message: "خطای داخلی سرور!"});
+        }
+    }
+
+    // remove a member from a group
+    static async removeMemberFromGroup(req: Request, res: Response) {
+        try {
+            const {emp_id, gid} = req.params;
+            if(!emp_id || !gid) {
+                return res.status(400).json({message: "لطفا اطلاعات لازم برای حذف کارمند از گروه را وارد نمایید!"});
+            }
+
+            const groupMem = await GroupMembership.findOne({where: {gid, emp_id}});
+            if(!groupMem) {
+                return res.status(400).json({message: "این کارمند در این گروه وجود ندارد!"});
+            }
+            await groupMem.destroy();
+            return res.status(200).json({message: "کاربر با موفقیت حذف شد!"});
+        }catch(error) {
+            console.error(error);
+            return res.status(500).json({message: "خطای داخلی سرور!"});
         }
     }
 }

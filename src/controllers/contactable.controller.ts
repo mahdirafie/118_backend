@@ -12,7 +12,8 @@ import ESPRelationship from "../models/esp_relationship.model.js";
 export class ContactableController {
     static async getContactableInfo(req: Request, res: Response) {
         try {
-            const { cid, uid } = req.params;
+            const { cid } = req.params;
+            const { uid } = req.info!;
             if (!cid || !uid) {
                 return res.status(400).json({ message: "Please enter the contact ID and user ID!" });
             }
@@ -151,8 +152,19 @@ export class ContactableController {
                 });
             }
 
+            // prepare the id(if employee: emp_id, if post: pid, if space: sid)
+            let id: number = 0;
+            if (contact_type === "employee") {
+                id = contactable.Employee!.emp_id;
+            } else if (contact_type === "post") {
+                id = contactable.Post!.cid;
+            } else if (contact_type === "space") {
+                id = contactable.Space!.cid;
+            }
+
             // Prepare the response
             let contactData: any = {
+                id: id,
                 cid: contactInfo.cid,
                 contact_type: contact_type,
                 is_favorite: isFavorited,
