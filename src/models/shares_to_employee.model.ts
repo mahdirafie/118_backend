@@ -5,7 +5,6 @@ import Employee from "./employee.model.js";
 
 class SharesToEmployee extends Model {
   declare val_id: ForeignKey<PersonalAttributeValue["val_id"]>;
-  declare emp_id: ForeignKey<Employee["emp_id"]>;
   declare receiver_emp_id: ForeignKey<Employee["emp_id"]>;
 
   declare readonly createdAt: Date;
@@ -22,18 +21,9 @@ SharesToEmployee.init(
       },
       onDelete: "CASCADE",
     },
-    emp_id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
-      references: {
-        model: Employee,
-        key: "emp_id",
-      },
-      onDelete: "CASCADE",
-    },
     receiver_emp_id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      primaryKey: true,
       references: {
         model: Employee,
         key: "emp_id",

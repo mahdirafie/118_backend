@@ -4,6 +4,7 @@ import Contactable from "./contactable.model.js";
 import User from "./user.model.js";
 import EmployeeFacultyMemeber from "./employee_fm.model.js";
 import EmployeeNonFacultyMember from "./employee_nfm.model.js";
+import Group from "./group.model.js";
 
 class Employee extends Model {
   declare emp_id: number;
@@ -17,6 +18,7 @@ class Employee extends Model {
   declare EmployeeFacultyMemeber?: EmployeeFacultyMemeber;
   declare EmployeeNonFacultyMember?: EmployeeNonFacultyMember;
   declare User?: User;
+  declare memberGroups?: Group[];
 }
 
 Employee.init(

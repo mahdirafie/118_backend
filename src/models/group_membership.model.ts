@@ -6,6 +6,10 @@ import Group from "./group.model.js";
 class GroupMembership extends Model {
   declare emp_id: ForeignKey<Employee["emp_id"]>;
   declare gid: ForeignKey<Group["gid"]>;
+
+  declare readonly createdAt?: Date;
+  
+  declare Group?: Group;
 }
 
 GroupMembership.init(
@@ -29,7 +33,7 @@ GroupMembership.init(
       onDelete: "CASCADE",
     },
   },
-  { sequelize, tableName: "group_memberships", timestamps: false }
+  { sequelize, tableName: "group_memberships", timestamps: true, updatedAt: false }
 );
 
 export default GroupMembership;

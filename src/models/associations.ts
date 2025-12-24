@@ -66,8 +66,8 @@ export const applyAssociations = () => {
     EmployeeOperation.belongsTo(Employee, { foreignKey: 'emp_id' });
 
     // Employee -> PersonalAttributeValue
-    Employee.hasMany(PersonalAttributeValue, { foreignKey: 'emp_id' });
-    PersonalAttributeValue.belongsTo(Employee, { foreignKey: 'emp_id' });
+    Employee.hasMany(PersonalAttributeValue, { foreignKey: 'emp_id', as: 'ownerAttVal' });
+    PersonalAttributeValue.belongsTo(Employee, { foreignKey: 'emp_id', as: 'owner' });
 
     // Employee <-> Contactable (Reminder)
     Employee.belongsToMany(Contactable, { through: Reminder, foreignKey: 'emp_id', otherKey: 'cid' });
@@ -87,24 +87,42 @@ export const applyAssociations = () => {
         as: 'owner'
     });
 
+    GroupMembership.belongsTo(Group, { foreignKey: 'gid', as: 'Group' });
+    Group.hasMany(GroupMembership, { foreignKey: 'gid', as: 'memberships' });
 
-    // SharesToGroup ternary relationship
-    SharesToGroup.belongsTo(Employee, { foreignKey: 'emp_id' });
-    SharesToGroup.belongsTo(Group, { foreignKey: 'gid' });
-    SharesToGroup.belongsTo(PersonalAttributeValue, { foreignKey: 'val_id' });
 
-    Employee.hasMany(SharesToGroup, { foreignKey: 'emp_id' });
-    Group.hasMany(SharesToGroup, { foreignKey: 'gid' });
-    PersonalAttributeValue.hasMany(SharesToGroup, { foreignKey: 'val_id' });
+    // PersonalAttributeValue can be shared to many employees
+    PersonalAttributeValue.belongsToMany(Employee, {
+        through: SharesToEmployee,
+        foreignKey: 'val_id',
+        otherKey: 'receiver_emp_id',
+        as: 'sharedWithEmployees',
+    });
 
-    // SharesToEmployee ternary relationship with aliases
-    SharesToEmployee.belongsTo(Employee, { foreignKey: 'emp_id', as: 'sender' });
-    SharesToEmployee.belongsTo(Employee, { foreignKey: 'receiver_emp_id', as: 'receiver' });
-    SharesToEmployee.belongsTo(PersonalAttributeValue, { foreignKey: 'val_id' });
+    // Employee can receive many personal attribute values
+    Employee.belongsToMany(PersonalAttributeValue, {
+        through: SharesToEmployee,
+        foreignKey: 'receiver_emp_id',
+        otherKey: 'val_id',
+        as: 'receivedAttributeValuesEmps',
+    });
 
-    Employee.hasMany(SharesToEmployee, { foreignKey: 'emp_id', as: 'empSender' });
-    Employee.hasMany(SharesToEmployee, { foreignKey: 'receiver_emp_id', as: 'empReceiver' });
-    PersonalAttributeValue.hasMany(SharesToEmployee, { foreignKey: 'val_id' });
+    // PersonalAttributeValue can be shared to many Groups
+    PersonalAttributeValue.belongsToMany(Group, {
+        through: SharesToGroup,
+        foreignKey: 'val_id',
+        otherKey: 'gid',
+        as: 'sharedWithGroups',
+    });
+
+    // Group can receive many personal attribute values
+    Group.belongsToMany(PersonalAttributeValue, {
+        through: SharesToGroup,
+        foreignKey: 'gid',
+        otherKey: 'val_id',
+        as: 'receivedAttributeValuesGroups',
+    });
+
 
     // Contactable -> Post
     Contactable.hasOne(Post, { foreignKey: 'cid' });

@@ -6,7 +6,6 @@ import Employee from "./employee.model.js";
 class PersonalAttributeValue extends Model {
   declare val_id: number;
   declare value: string;
-  declare is_sharable: boolean;
   declare att_id: ForeignKey<PersonalAttribute["att_id"]>;
   declare emp_id: ForeignKey<Employee['emp_id']>;
 }

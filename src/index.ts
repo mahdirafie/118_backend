@@ -104,6 +104,10 @@ app.delete('/group/remove-member/:gid/:emp_id', authenticate, GroupController.re
 app.get('/attribute/get-all', authenticate, AttributeController.getAllTheAttributes);
 app.post('/attribute/create', AttributeController.createAttribute);
 app.post('/attribute/set-atts-values', authenticate, AttributeController.setAttributeValues);
+app.post('/attribute/set-visible-att-vals-emp', authenticate, AttributeController.setVisibleAttributesForEmployee);
+app.post('/attribute/set-visible-att-vals-group', authenticate, AttributeController.setVisibleAttributesForGroup);
+app.get('/attribute/get-visible-att-vals/:receiver_id/:type', authenticate, AttributeController.getVisibleAttributeValues);
+app.get('/attribute/get-employee-personal-info/:owner_emp_id', authenticate, AttributeController.getEmployeePersonalAttributeValues);
 
 // -------------------------
 // Connect to DB and sync models
